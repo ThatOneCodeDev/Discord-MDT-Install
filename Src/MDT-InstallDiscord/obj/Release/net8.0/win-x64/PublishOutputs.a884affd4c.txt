@@ -1,2 +1,0 @@
-C:\Users\HueyJerhynS-CEOSSCS\source\repos\MDT-InstallDiscord\MDT-InstallDiscord\bin\Release\net8.0\win-x64\publish\MDT-InstallDiscord.pdb
-C:\Users\HueyJerhynS-CEOSSCS\source\repos\MDT-InstallDiscord\MDT-InstallDiscord\bin\Release\net8.0\win-x64\publish\MDT-InstallDiscord.exe

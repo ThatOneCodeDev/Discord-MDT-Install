@@ -13,6 +13,7 @@
 		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 		<!-- Reduce file size by trimming -->
 		<PublishTrimmed>true</PublishTrimmed>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
 
 </Project>
