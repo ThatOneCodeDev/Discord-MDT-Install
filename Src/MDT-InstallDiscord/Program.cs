@@ -11,8 +11,9 @@ namespace SentinelSec_InstallDiscord
         static int Main(string[] args)
         {
             const string appName = "SentinelSec_DiscordProvision";
-            string publicPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments), "MDT-InstallDiscord.exe");
-            string discordDownloadUrl = "https://github.com/ThatOneCodeDev/Discord-MDT-Install/releases/download/1.0/MDT-InstallDiscord.exe";
+            const string discordDownloadUrl = "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64";
+            string discordFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord");
+            string tempInstallerPath = Path.Combine(Path.GetTempPath(), "DiscordSetup.exe");
             string registryBaseKey = @"Software\SentinelSec\DiscordProvisioning";
 
             // Set console title
@@ -28,14 +29,8 @@ namespace SentinelSec_InstallDiscord
 
                 if (string.Equals(args[0], "/install", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine("[SentinelSec Studios] Starting installation...");
-                    if (!DownloadFile(discordDownloadUrl, publicPath))
-                    {
-                        Console.WriteLine("[SentinelSec Studios] Failed to download the installer.");
-                        return 1; // Exit code 1: Download failed
-                    }
-
-                    ConfigureForLoginCheck(appName, publicPath, registryBaseKey);
+                    Console.WriteLine("[SentinelSec Studios] Installing Discord provisioning utility...");
+                    ConfigureForLoginCheck(appName, tempInstallerPath, registryBaseKey);
                     Console.WriteLine("[SentinelSec Studios] Installation complete. Login checks enabled.");
                     return 0; // Exit code 0: Success
                 }
@@ -43,7 +38,7 @@ namespace SentinelSec_InstallDiscord
                 if (string.Equals(args[0], "/check", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("[SentinelSec Studios] Checking Discord installation...");
-                    return CheckDiscordInstallation();
+                    return CheckAndInstallDiscord(discordFolder, discordDownloadUrl, tempInstallerPath);
                 }
 
                 if (string.Equals(args[0], "/optout", StringComparison.OrdinalIgnoreCase))
@@ -55,17 +50,25 @@ namespace SentinelSec_InstallDiscord
                     }
 
                     OptOutMachine(appName, registryBaseKey);
-                    Console.WriteLine("[SentinelSec Studios] Machine-wide opt-out complete.");
+                    Console.WriteLine("[SentinelSec Studios] Machine-wide opt-out complete. Boot logon entry removed.");
                     return 0; // Exit code 0: Success
                 }
 
-                Console.WriteLine("[SentinelSec Studios] Invalid or missing argument. Use /install, /check, or /optout.");
+                Console.WriteLine("[SentinelSec Studios] Invalid or missing argument. Use /install, /check, /optout, or /help.");
                 return 3; // Exit code 3: Invalid argument
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[SentinelSec Studios] An error occurred: {ex.Message}");
                 return 4; // Exit code 4: General error
+            }
+            finally
+            {
+                if (File.Exists(tempInstallerPath))
+                {
+                    File.Delete(tempInstallerPath);
+                    Console.WriteLine("[SentinelSec Studios] Temporary installer file cleaned up.");
+                }
             }
         }
 
@@ -75,10 +78,37 @@ namespace SentinelSec_InstallDiscord
             Console.WriteLine("--------------------------------------------------");
             Console.WriteLine("This utility ensures Discord is installed and operational on user systems.");
             Console.WriteLine("Available Commands:");
-            Console.WriteLine("  /install         - Installs the utility, downloads the executable, and configures login checks.");
-            Console.WriteLine("  /check           - Runs the utility in check mode to ensure Discord is installed.");
-            Console.WriteLine("  /optout          - Disables the utility for all users (requires admin).");
+            Console.WriteLine("  /install         - Configures login checks and enables provisioning.");
+            Console.WriteLine("  /check           - Checks for Discord installation and installs it if missing.");
+            Console.WriteLine("  /optout          - Removes login checks for all users (requires admin).");
             Console.WriteLine("  /help            - Displays this help message.");
+        }
+
+        private static int CheckAndInstallDiscord(string discordFolder, string downloadUrl, string installerPath)
+        {
+            if (Directory.Exists(discordFolder))
+            {
+                Console.WriteLine("[SentinelSec Studios] Discord is already installed.");
+                return 0; // Exit code 0: Success
+            }
+
+            Console.WriteLine("[SentinelSec Studios] Discord is not installed. Downloading the installer...");
+
+            if (!DownloadFile(downloadUrl, installerPath))
+            {
+                Console.WriteLine("[SentinelSec Studios] Failed to download the Discord installer.");
+                return 1; // Exit code 1: Download failed
+            }
+
+            Console.WriteLine("[SentinelSec Studios] Installing Discord...");
+            if (!RunInstaller(installerPath))
+            {
+                Console.WriteLine("[SentinelSec Studios] Discord installation failed.");
+                return 2; // Exit code 2: Installation failed
+            }
+
+            Console.WriteLine("[SentinelSec Studios] Discord installed successfully.");
+            return 0; // Exit code 0: Success
         }
 
         private static bool DownloadFile(string url, string destinationPath)
@@ -100,6 +130,28 @@ namespace SentinelSec_InstallDiscord
             }
         }
 
+        private static bool RunInstaller(string installerPath)
+        {
+            try
+            {
+                Process? process = Process.Start(installerPath, "/S"); // Silent installation
+                process?.WaitForExit();
+
+                if (process?.ExitCode != 0)
+                {
+                    Console.WriteLine($"[SentinelSec Studios] Installer exited with code {process.ExitCode}.");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SentinelSec Studios] Failed to run installer: {ex.Message}");
+                return false;
+            }
+        }
+
         private static void ConfigureForLoginCheck(string appName, string executablePath, string baseKey)
         {
             using (RegistryKey? runKey = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
@@ -111,20 +163,6 @@ namespace SentinelSec_InstallDiscord
             {
                 key?.SetValue("Installed", "True");
             }
-        }
-
-        private static int CheckDiscordInstallation()
-        {
-            string discordFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord");
-
-            if (Directory.Exists(discordFolder))
-            {
-                Console.WriteLine("[SentinelSec Studios] Discord is already installed.");
-                return 0; // Exit code 0: Success
-            }
-
-            Console.WriteLine("[SentinelSec Studios] Discord is not installed. Please run the utility with /install to enable provisioning.");
-            return 5; // Exit code 5: Discord not installed
         }
 
         private static void OptOutMachine(string appName, string baseKey)
