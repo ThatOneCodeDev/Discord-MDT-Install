@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MDT-InstallDiscord")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+388732136e46146bdf7d9c96474af59d1acb3638")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0123be853c2ccfce0d9a081ff784fcf49c9a45ac")]
 [assembly: System.Reflection.AssemblyProductAttribute("MDT-InstallDiscord")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MDT-InstallDiscord")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

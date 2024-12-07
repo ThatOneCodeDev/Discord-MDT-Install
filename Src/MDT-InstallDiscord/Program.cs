@@ -11,10 +11,10 @@ namespace SentinelSec_InstallDiscord
         static int Main(string[] args)
         {
             const string appName = "SentinelSec_DiscordProvision";
-            const string discordDownloadUrl = "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64";
+            const string discordDownloadUrl = "https://github.com/ThatOneCodeDev/Discord-MDT-Install/releases/download/1.0/MDT-InstallDiscord.exe";
+            string publicDocumentsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments), "MDT-InstallDiscord.exe");
             string discordFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord");
             string tempInstallerPath = Path.Combine(Path.GetTempPath(), "DiscordSetup.exe");
-            string registryBaseKey = @"Software\SentinelSec\DiscordProvisioning";
 
             // Set console title
             Console.Title = "SentinelSec Studios - Discord Provisioning Utility";
@@ -29,8 +29,17 @@ namespace SentinelSec_InstallDiscord
 
                 if (string.Equals(args[0], "/install", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine("[SentinelSec Studios] Installing Discord provisioning utility...");
-                    ConfigureForLoginCheck(appName, tempInstallerPath, registryBaseKey);
+                    Console.WriteLine("[SentinelSec Studios] Starting installation...");
+
+                    // Download the utility to Public Documents
+                    if (!DownloadFile(discordDownloadUrl, publicDocumentsPath))
+                    {
+                        Console.WriteLine("[SentinelSec Studios] Failed to download the utility.");
+                        return 1; // Exit code 1: Download failed
+                    }
+
+                    // Add Run-on-Logon registry entry
+                    ConfigureForLoginCheck(appName, publicDocumentsPath);
                     Console.WriteLine("[SentinelSec Studios] Installation complete. Login checks enabled.");
                     return 0; // Exit code 0: Success
                 }
@@ -49,7 +58,7 @@ namespace SentinelSec_InstallDiscord
                         return 2; // Exit code 2: Insufficient privileges
                     }
 
-                    OptOutMachine(appName, registryBaseKey);
+                    OptOutMachine(appName);
                     Console.WriteLine("[SentinelSec Studios] Machine-wide opt-out complete. Boot logon entry removed.");
                     return 0; // Exit code 0: Success
                 }
@@ -78,7 +87,7 @@ namespace SentinelSec_InstallDiscord
             Console.WriteLine("--------------------------------------------------");
             Console.WriteLine("This utility ensures Discord is installed and operational on user systems.");
             Console.WriteLine("Available Commands:");
-            Console.WriteLine("  /install         - Configures login checks and enables provisioning.");
+            Console.WriteLine("  /install         - Downloads the utility to Public Documents and configures login checks.");
             Console.WriteLine("  /check           - Checks for Discord installation and installs it if missing.");
             Console.WriteLine("  /optout          - Removes login checks for all users (requires admin).");
             Console.WriteLine("  /help            - Displays this help message.");
@@ -152,29 +161,33 @@ namespace SentinelSec_InstallDiscord
             }
         }
 
-        private static void ConfigureForLoginCheck(string appName, string executablePath, string baseKey)
+        private static void ConfigureForLoginCheck(string appName, string executablePath)
         {
-            using (RegistryKey? runKey = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+            using (RegistryKey? runKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
             {
-                runKey?.SetValue(appName, $"\"{executablePath}\" /check");
-            }
+                if (runKey == null)
+                {
+                    Console.WriteLine("[SentinelSec Studios] Failed to access Run registry key.");
+                    return;
+                }
 
-            using (RegistryKey? key = Registry.LocalMachine.CreateSubKey(baseKey))
-            {
-                key?.SetValue("Installed", "True");
+                runKey.SetValue(appName, $"\"{executablePath}\" /check");
+                Console.WriteLine("[SentinelSec Studios] Login check configured successfully.");
             }
         }
 
-        private static void OptOutMachine(string appName, string baseKey)
+        private static void OptOutMachine(string appName)
         {
-            using (RegistryKey? runKey = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+            using (RegistryKey? runKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
             {
-                runKey?.DeleteValue(appName, false);
-            }
+                if (runKey == null)
+                {
+                    Console.WriteLine("[SentinelSec Studios] Failed to access Run registry key.");
+                    return;
+                }
 
-            using (RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"Software\SentinelSec", true))
-            {
-                key?.DeleteSubKeyTree("DiscordProvisioning", false);
+                runKey.DeleteValue(appName, false);
+                Console.WriteLine("[SentinelSec Studios] Run-on-logon entry removed.");
             }
         }
 
