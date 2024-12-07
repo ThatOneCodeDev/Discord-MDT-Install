@@ -11,7 +11,7 @@ namespace SentinelSec_InstallDiscord
         static int Main(string[] args)
         {
             const string appName = "SentinelSec_DiscordProvision";
-            string publicPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "MDT-InstallDiscord.exe");
+            string publicPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments), "MDT-InstallDiscord.exe");
             string discordDownloadUrl = "https://github.com/ThatOneCodeDev/Discord-MDT-Install/releases/download/1.0/MDT-InstallDiscord.exe";
             string registryBaseKey = @"Software\SentinelSec\DiscordProvisioning";
 
