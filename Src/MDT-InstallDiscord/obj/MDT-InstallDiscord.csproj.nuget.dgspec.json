@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\HueyJerhynS-CEOSSCS\\source\\repos\\MDT-InstallDiscord\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj": {}
+    "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj": {}
   },
   "projects": {
-    "C:\\Users\\HueyJerhynS-CEOSSCS\\source\\repos\\MDT-InstallDiscord\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj": {
+    "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\HueyJerhynS-CEOSSCS\\source\\repos\\MDT-InstallDiscord\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj",
+        "projectUniqueName": "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj",
         "projectName": "MDT-InstallDiscord",
-        "projectPath": "C:\\Users\\HueyJerhynS-CEOSSCS\\source\\repos\\MDT-InstallDiscord\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj",
+        "projectPath": "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\MDT-InstallDiscord\\MDT-InstallDiscord.csproj",
         "packagesPath": "C:\\Users\\HueyJerhynS-CEOSSCS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\HueyJerhynS-CEOSSCS\\source\\repos\\MDT-InstallDiscord\\MDT-InstallDiscord\\obj\\",
+        "outputPath": "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\MDT-InstallDiscord\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

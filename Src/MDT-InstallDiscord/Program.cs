@@ -10,7 +10,7 @@ namespace MDT_InstallDiscord
         static int Main(string[] args)
         {
             const string appName = "CheckAndInstallDiscord";
-            string networkSharePath = @"\\SSCSMS-BVVRND2\SSCS-DSOShare\DeploymentShare$\Applications\Discord - Discord\MDT-InstallDiscord.exe";
+            string downloadUrl = "https://github.com/ThatOneCodeDev/Discord-MDT-Install/releases/download/1.0/MDT-InstallDiscord.exe";
             string localPublicPath = @"C:\Users\Public\MDT-InstallDiscord.exe";
             string discordFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord");
             string tempInstallerPath = Path.Combine(Path.GetTempPath(), "DiscordSetup.exe");
@@ -18,21 +18,22 @@ namespace MDT_InstallDiscord
 
             try
             {
-                // /install: Copy executable and configure system
                 if (args.Length > 0 && args[0].Equals("/install", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Step 1: Download the executable from GitHub
                     Console.WriteLine("Starting /install process...");
-
-                    // Step 1: Copy the executable to the public folder
                     if (!File.Exists(localPublicPath))
                     {
-                        Console.WriteLine($"Copying from network share: {networkSharePath} to {localPublicPath}");
-                        File.Copy(networkSharePath, localPublicPath, true);
-                        Console.WriteLine("Executable copied to public folder successfully.");
+                        Console.WriteLine("Downloading executable from GitHub...");
+                        using (var client = new System.Net.WebClient())
+                        {
+                            client.DownloadFile(downloadUrl, localPublicPath);
+                        }
+                        Console.WriteLine($"Executable downloaded successfully to: {localPublicPath}");
                     }
                     else
                     {
-                        Console.WriteLine("Executable already exists in the public folder. Skipping copy.");
+                        Console.WriteLine("Executable already exists in the public folder. Skipping download.");
                     }
 
                     // Step 2: Configure the system to run at login with /check
@@ -54,9 +55,9 @@ namespace MDT_InstallDiscord
                     return 0; // Success
                 }
 
-                // /check: Run at login to install Discord if not already installed
                 if (args.Length > 0 && args[0].Equals("/check", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Step 1: Check if Discord is already installed
                     Console.WriteLine($"Checking if Discord is installed for user: {Environment.UserName}...");
                     if (Directory.Exists(discordFolder))
                     {
@@ -64,16 +65,15 @@ namespace MDT_InstallDiscord
                         return 2; // Discord already installed
                     }
 
+                    // Step 2: Download the latest Discord installer
                     Console.WriteLine("Discord is not installed. Downloading the latest installer...");
-
-                    // Download the latest Discord installer
                     using (var client = new System.Net.WebClient())
                     {
                         client.DownloadFile(discordDownloadUrl, tempInstallerPath);
                     }
                     Console.WriteLine($"Discord installer downloaded to: {tempInstallerPath}");
 
-                    // Run the installer silently
+                    // Step 3: Run the installer silently
                     Console.WriteLine("Running the Discord installer...");
                     Process installerProcess = Process.Start(new ProcessStartInfo
                     {

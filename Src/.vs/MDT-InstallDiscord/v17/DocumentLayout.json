@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F62D304C-3F69-4810-8162-BBD6408F9319}|MDT-InstallDiscord\\MDT-InstallDiscord.csproj|c:\\users\\hueyjerhyns-ceosscs\\onedrive - sentinelsec studios\\documents\\github\\sscs-netbanner\\discord-mdt-install\\src\\mdt-installdiscord\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F62D304C-3F69-4810-8162-BBD6408F9319}|MDT-InstallDiscord\\MDT-InstallDiscord.csproj|solutionrelative:mdt-installdiscord\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\MDT-InstallDiscord\\Program.cs",
+              "RelativeDocumentMoniker": "MDT-InstallDiscord\\Program.cs",
+              "ToolTip": "C:\\Users\\HueyJerhynS-CEOSSCS\\OneDrive - SentinelSec Studios\\Documents\\GitHub\\SSCS-NetBanner\\Discord-MDT-Install\\Src\\MDT-InstallDiscord\\Program.cs",
+              "RelativeToolTip": "MDT-InstallDiscord\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-12-07T07:17:31.056Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
