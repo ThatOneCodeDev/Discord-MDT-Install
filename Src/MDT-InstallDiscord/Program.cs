@@ -1,209 +1,145 @@
 ﻿using System;
 using System.IO;
 using System.Diagnostics;
-using System.Net;
 using Microsoft.Win32;
 
-namespace SentinelSec_InstallDiscord
+namespace MDT_InstallDiscord
 {
     internal class Program
     {
         static int Main(string[] args)
         {
-            const string appName = "SentinelSec_DiscordProvision";
-            const string discordDownloadUrl = "https://github.com/ThatOneCodeDev/Discord-MDT-Install/releases/download/1.0/MDT-InstallDiscord.exe";
-            string publicDocumentsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonDocuments), "MDT-InstallDiscord.exe");
+            const string appName = "CheckAndInstallDiscord";
+            string localPublicPath = @"C:\Users\Public\MDT-InstallDiscord.exe";
             string discordFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "discord");
             string tempInstallerPath = Path.Combine(Path.GetTempPath(), "DiscordSetup.exe");
-
-            // Set console title
-            Console.Title = "SentinelSec Studios - Discord Provisioning Utility";
+            string discordDownloadUrl = "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64";
 
             try
             {
-                if (args.Length == 0 || string.Equals(args[0], "/help", StringComparison.OrdinalIgnoreCase))
+                // /install: Copy executable and configure system
+                if (args.Length > 0 && args[0].Equals("/install", StringComparison.OrdinalIgnoreCase))
                 {
-                    ShowHelp();
-                    return 0; // Exit code 0: Success
-                }
+                    Console.WriteLine("[SentinelSec Studios] Starting /install process...");
 
-                if (string.Equals(args[0], "/install", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("[SentinelSec Studios] Starting installation...");
-
-                    // Download the utility to Public Documents
-                    if (!DownloadFile(discordDownloadUrl, publicDocumentsPath))
+                    // Step 1: Copy the executable to the public folder
+                    if (!File.Exists(localPublicPath))
                     {
-                        Console.WriteLine("[SentinelSec Studios] Failed to download the utility.");
-                        return 1; // Exit code 1: Download failed
+                        Console.WriteLine($"[SentinelSec Studios] Copying to public folder: {localPublicPath}");
+                        File.Copy(Process.GetCurrentProcess().MainModule.FileName, localPublicPath, true);
+                        Console.WriteLine("[SentinelSec Studios] Executable copied to public folder successfully.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[SentinelSec Studios] Executable already exists in the public folder. Skipping copy.");
                     }
 
-                    // Add Run-on-Logon registry entry
-                    ConfigureForLoginCheck(appName, publicDocumentsPath);
-                    Console.WriteLine("[SentinelSec Studios] Installation complete. Login checks enabled.");
-                    return 0; // Exit code 0: Success
-                }
-
-                if (string.Equals(args[0], "/check", StringComparison.OrdinalIgnoreCase))
-                {
-                    Console.WriteLine("[SentinelSec Studios] Checking Discord installation...");
-                    return CheckAndInstallDiscord(discordFolder, discordDownloadUrl, tempInstallerPath);
-                }
-
-                if (string.Equals(args[0], "/optout", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!IsAdministrator())
+                    // Step 2: Configure the system to run at login with /check
+                    Console.WriteLine("[SentinelSec Studios] Configuring the system to check for Discord at login...");
+                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
                     {
-                        Console.WriteLine("[SentinelSec Studios] Opt-out requires administrative privileges.");
-                        return 2; // Exit code 2: Insufficient privileges
+                        if (key != null)
+                        {
+                            key.SetValue(appName, $"\"{localPublicPath}\" /check");
+                            Console.WriteLine("[SentinelSec Studios] System configured successfully.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[SentinelSec Studios] Failed to access the registry. Please run as administrator.");
+                            return 1; // General failure
+                        }
                     }
 
-                    OptOutMachine(appName);
-                    Console.WriteLine("[SentinelSec Studios] Machine-wide opt-out complete. Boot logon entry removed.");
-                    return 0; // Exit code 0: Success
+                    return 0; // Success
                 }
 
-                Console.WriteLine("[SentinelSec Studios] Invalid or missing argument. Use /install, /check, /optout, or /help.");
-                return 3; // Exit code 3: Invalid argument
+                // /check: Run at login to install Discord if not already installed
+                if (args.Length > 0 && args[0].Equals("/check", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (Environment.UserName.ToLower() == "administrator" || Environment.UserName ==  "sscs_admin") { return 0; }
+                    Console.WriteLine($"[SentinelSec Studios] Checking if Discord is installed for user: {Environment.UserName}...");
+
+                    // Step 1: Check if Discord is already installed
+                    if (Directory.Exists(discordFolder))
+                    {
+                        Console.WriteLine("[SentinelSec Studios] Discord is already installed. Exiting...");
+                        return 0; // Discord already installed
+                    }
+
+                    // Step 2: Download the latest Discord installer
+                    Console.WriteLine("[SentinelSec Studios] Discord is not installed. Downloading the latest installer...");
+                    using (var client = new System.Net.WebClient())
+                    {
+                        client.DownloadFile(discordDownloadUrl, tempInstallerPath);
+                    }
+                    Console.WriteLine($"[SentinelSec Studios] Discord installer downloaded to: {tempInstallerPath}");
+
+                    // Step 3: Run the installer silently
+                    Console.WriteLine("[SentinelSec Studios] Running the Discord installer...");
+                    Process installerProcess = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = tempInstallerPath,
+                        Arguments = "/S",
+                        UseShellExecute = true,
+                        CreateNoWindow = true
+                    });
+                    installerProcess.WaitForExit();
+
+                    if (installerProcess.ExitCode != 0)
+                    {
+                        Console.WriteLine("[SentinelSec Studios] Discord installer encountered an error.");
+                        return 4; // Installer error
+                    }
+
+                    Console.WriteLine("[SentinelSec Studios] Discord installation completed successfully.");
+                    return 0; // Success
+                }
+
+                // /optout: Remove Run registry entry
+                if (args.Length > 0 && args[0].Equals("/optout", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("[SentinelSec Studios] Opting out of automatic login checks...");
+
+                    using (RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                    {
+                        if (key != null && key.GetValue(appName) != null)
+                        {
+                            key.DeleteValue(appName, false);
+                            Console.WriteLine("[SentinelSec Studios] Opt-out successful. Login check entry removed.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[SentinelSec Studios] No login check entry found to remove.");
+                        }
+                    }
+
+                    return 0; // Success
+                }
+
+                // Invalid argument handling
+                Console.WriteLine("[SentinelSec Studios] Invalid or missing argument. Use /install, /check, or /optout.");
+                return 100; // Invalid argument
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SentinelSec Studios] An error occurred: {ex.Message}");
-                return 4; // Exit code 4: General error
+                Console.WriteLine($"[SentinelSec Studios] An unexpected error occurred: {ex.Message}");
+                return 1; // General failure
             }
             finally
             {
+                // Cleanup: Delete the installer file if it exists
                 if (File.Exists(tempInstallerPath))
                 {
-                    File.Delete(tempInstallerPath);
-                    Console.WriteLine("[SentinelSec Studios] Temporary installer file cleaned up.");
+                    try
+                    {
+                        File.Delete(tempInstallerPath);
+                        Console.WriteLine("[SentinelSec Studios] Temporary installer file cleaned up.");
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        Console.WriteLine($"[SentinelSec Studios] Failed to clean up temporary file: {cleanupEx.Message}");
+                    }
                 }
-            }
-        }
-
-        private static void ShowHelp()
-        {
-            Console.WriteLine("SentinelSec Studios - Discord Provisioning Utility");
-            Console.WriteLine("--------------------------------------------------");
-            Console.WriteLine("This utility ensures Discord is installed and operational on user systems.");
-            Console.WriteLine("Available Commands:");
-            Console.WriteLine("  /install         - Downloads the utility to Public Documents and configures login checks.");
-            Console.WriteLine("  /check           - Checks for Discord installation and installs it if missing.");
-            Console.WriteLine("  /optout          - Removes login checks for all users (requires admin).");
-            Console.WriteLine("  /help            - Displays this help message.");
-        }
-
-        private static int CheckAndInstallDiscord(string discordFolder, string downloadUrl, string installerPath)
-        {
-            if (Directory.Exists(discordFolder))
-            {
-                Console.WriteLine("[SentinelSec Studios] Discord is already installed.");
-                return 0; // Exit code 0: Success
-            }
-
-            Console.WriteLine("[SentinelSec Studios] Discord is not installed. Downloading the installer...");
-
-            if (!DownloadFile(downloadUrl, installerPath))
-            {
-                Console.WriteLine("[SentinelSec Studios] Failed to download the Discord installer.");
-                return 1; // Exit code 1: Download failed
-            }
-
-            Console.WriteLine("[SentinelSec Studios] Installing Discord...");
-            if (!RunInstaller(installerPath))
-            {
-                Console.WriteLine("[SentinelSec Studios] Discord installation failed.");
-                return 2; // Exit code 2: Installation failed
-            }
-
-            Console.WriteLine("[SentinelSec Studios] Discord installed successfully.");
-            return 0; // Exit code 0: Success
-        }
-
-        private static bool DownloadFile(string url, string destinationPath)
-        {
-            try
-            {
-                using (var client = new WebClient())
-                {
-                    client.DownloadFile(url, destinationPath);
-                }
-
-                Console.WriteLine($"[SentinelSec Studios] File downloaded to {destinationPath}.");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[SentinelSec Studios] Failed to download file: {ex.Message}");
-                return false;
-            }
-        }
-
-        private static bool RunInstaller(string installerPath)
-        {
-            try
-            {
-                Process? process = Process.Start(installerPath, "/S"); // Silent installation
-                process?.WaitForExit();
-
-                if (process?.ExitCode != 0)
-                {
-                    Console.WriteLine($"[SentinelSec Studios] Installer exited with code {process.ExitCode}.");
-                    return false;
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[SentinelSec Studios] Failed to run installer: {ex.Message}");
-                return false;
-            }
-        }
-
-        private static void ConfigureForLoginCheck(string appName, string executablePath)
-        {
-            using (RegistryKey? runKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
-            {
-                if (runKey == null)
-                {
-                    Console.WriteLine("[SentinelSec Studios] Failed to access Run registry key.");
-                    return;
-                }
-
-                runKey.SetValue(appName, $"\"{executablePath}\" /check");
-                Console.WriteLine("[SentinelSec Studios] Login check configured successfully.");
-            }
-        }
-
-        private static void OptOutMachine(string appName)
-        {
-            using (RegistryKey? runKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
-            {
-                if (runKey == null)
-                {
-                    Console.WriteLine("[SentinelSec Studios] Failed to access Run registry key.");
-                    return;
-                }
-
-                runKey.DeleteValue(appName, false);
-                Console.WriteLine("[SentinelSec Studios] Run-on-logon entry removed.");
-            }
-        }
-
-        private static bool IsAdministrator()
-        {
-            try
-            {
-                using (var identity = System.Security.Principal.WindowsIdentity.GetCurrent())
-                {
-                    var principal = new System.Security.Principal.WindowsPrincipal(identity);
-                    return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
-                }
-            }
-            catch
-            {
-                return false;
             }
         }
     }
